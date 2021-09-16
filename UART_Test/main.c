@@ -39,14 +39,28 @@ int main(void)
     GPIOA->SLR |= BIT0;//0x1 = Slew rate control is enabled for the corresponding pin.
     GPIOA->SLR |= BIT1;//0x1 = Slew rate control is enabled for the corresponding pin.
 
-    //GPIO 12-mA Drive Select
-    GPIOA->DR12R |= BIT0;//The corresponding GPIO pin has 12-mA drive
-    GPIOA->DR12R |= BIT1;//The corresponding GPIO pin has 12-mA drive
+    //GPIO 8-mA Drive Select
+    GPIOA->DR8R |= BIT0;//The corresponding GPIO pin has 8-mA drive
+    GPIOA->DR8R |= BIT1;//The corresponding GPIO pin has 8-mA drive
 
 
     //*****5.Configure the PMCn fields in the GPIOPCTL register to assign the UART signals to the appropriate pins
+    GPIOA->PCTL |= BIT1;//GPIO Pin Multiplexing page 30/157
 
 
+    //UART configuration page 1630
+    //*****1. Disable the UART by clearing the UARTEN bit in the UARTCTL register
+    UART0->CTL &= ~UART_CTL_UARTEN;
+    //*****2. Write the integer portion of the BRD to the UARTIBRD register.
+    UART0->IBRD = 10.8507;//BRD = 20000000 / (16 × 115200) = 10.8507
+    //*****3. Write the fractional portion of the BRD to the UARTFBRD register
+    UART0->FBRD = 54;//UARTFBRD[DIVFRAC] = integer(0.8507 × 64 + 0.5) = 54
+    //*****4. Write the desired serial parameters to the UARTLCRH register
+    UART0->LCRH = 0x00000060;
+    //*****5. Configure the UART clock source by writing to the UARTCC register
+    UART0->CC;
+    //*****6. Enable the UART by setting the UARTEN bit in the UARTCTL register.
+    UART0->CTL |= UART_CTL_UARTEN;
     while(1)
     {
         __delay_cycles(1000);//NOP
