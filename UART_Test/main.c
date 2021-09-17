@@ -4,6 +4,23 @@
 #include "msp.h"
 
 
+void UARTSendArray(char array_to_send[])//send char array
+{
+    //UART0->CTL |= UART_CTL_DTR;
+    unsigned int array_length = strlen(array_to_send);//size of char
+    unsigned int counter = 0;
+    for(counter = 0; counter <= array_length; counter++)//for loop with length
+    {
+        while(UART0->FR & UART_FR_BUSY);
+        UART0->DR = array_to_send[counter];//Take array at specific place
+        __delay_cycles(1000);//NOP
+    }
+
+    //UART0->CTL |= UART_CTL_EOT;
+
+}
+
+
 
 int main(void)
 {
@@ -13,7 +30,6 @@ int main(void)
 
     //UART PA0 33 – U0Rx
     //UART PA1 34 – U0Tx
-
 
     //UART Initialization and Configuration
     //26.4 page 1629
@@ -47,7 +63,6 @@ int main(void)
     //*****5.Configure the PMCn fields in the GPIOPCTL register to assign the UART signals to the appropriate pins
     GPIOA->PCTL |= BIT1;//GPIO Pin Multiplexing page 30/157
 
-
     //UART configuration page 1630
     //*****1. Disable the UART by clearing the UARTEN bit in the UARTCTL register
     UART0->CTL &= ~UART_CTL_UARTEN;
@@ -58,12 +73,26 @@ int main(void)
     //*****4. Write the desired serial parameters to the UARTLCRH register
     UART0->LCRH = 0x00000060;
     //*****5. Configure the UART clock source by writing to the UARTCC register
-    UART0->CC;
+    UART0->CC = 0x0;//page 1659
     //*****6. Enable the UART by setting the UARTEN bit in the UARTCTL register.
-    UART0->CTL |= UART_CTL_UARTEN;
+
+    UART0->CTL |= UART_CTL_UARTEN; //0x1 = The UART is enabled.
+
+
+    UART0->CTL |= UART_CTL_TXE;//UART Transmit Enable
+    UART0->CTL |= UART_CTL_RXE;//UART Receive Enable
+    UART0->CTL |= UART_CTL_LBE;//UART Loop Back Enable
+    UART0->CTL &= ~UART_CTL_SIREN;//0x0 = Normal operation
+
+
+    UART0->LCRH |= 0x00110000;//UART Word Length 8Bits page 1640
+    UART0->LCRH |= UART_LCRH_FEN;//UART Enable FIFOs
+
+
     while(1)
     {
-        __delay_cycles(1000);//NOP
+        __delay_cycles(100000);//NOP
+        UARTSendArray("Test\n");
     }
 
     return 0;
