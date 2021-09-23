@@ -10,7 +10,7 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="${build_artifact:UART_Test}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="UART_Test"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:UART_Test}"/>
-<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="C:\Users\Cyrill Wyller\git\msp432e401y\UART_Test\Debug\UART_Test.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="H:\git\msp432e401y\UART_Test\Debug\UART_Test.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/UART_Test"/>
 </listAttribute>

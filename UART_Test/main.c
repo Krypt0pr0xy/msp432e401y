@@ -36,6 +36,9 @@ int main(void)
     //-----------------------------------------------------------------------
     //******1. Enable the UART module page 331
     // UART Module 0 Run Mode Clock Gating Control
+
+
+
     SYSCTL->RCGCUART |= BIT0;//0x1 = Enable and provide a clock to UART module 0 in run mode
 
 
@@ -44,12 +47,12 @@ int main(void)
     SYSCTL->RCGCGPIO |= BIT0;//0x1 = Enable and provide a clock to GPIO port A in run mode.
 
 
-    //******3.Set the GPIO AFSEL bits for the appropriate pins page 1213
+    //******3.Set the GPIO AFSEL bits for the ap-propriate pins page 1213
     //GPIO Alternate Function Select
     GPIOA->AFSEL |= BIT0;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
     GPIOA->AFSEL |= BIT1;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
 
-
+    GPIOA->PC |= BIT0;//0x1 = GPIO port A is powered but does not receive a clock. In this case, the module is inactive.
     //******4.Configure the GPIO current level or slew rate as specified for the mode selected
     //GPIO Slew Rate Control Select
     GPIOA->SLR |= BIT0;//0x1 = Slew rate control is enabled for the corresponding pin.
@@ -76,17 +79,33 @@ int main(void)
     UART0->CC = 0x0;//page 1659
     //*****6. Enable the UART by setting the UARTEN bit in the UARTCTL register.
 
-    UART0->CTL |= UART_CTL_UARTEN; //0x1 = The UART is enabled.
 
-
-    UART0->CTL |= UART_CTL_TXE;//UART Transmit Enable
-    UART0->CTL |= UART_CTL_RXE;//UART Receive Enable
     UART0->CTL |= UART_CTL_LBE;//UART Loop Back Enable
     UART0->CTL &= ~UART_CTL_SIREN;//0x0 = Normal operation
 
-
+    UART0->LCRH |= UART_LCRH_FEN;//UART  FIFOs
     UART0->LCRH |= 0x00110000;//UART Word Length 8Bits page 1640
-    UART0->LCRH |= UART_LCRH_FEN;//UART Enable FIFOs
+
+
+    UART0->CTL |= UART_CTL_TXE;//UART Transmit Enable
+    //UART0->CTL &= ~UART_CTL_TXE;//UART Transmit Disable
+
+    UART0->CTL |= UART_CTL_RXE;//UART Receive Enable
+    //UART0->CTL &= ~UART_CTL_RXE;//UART Receive Disable
+
+
+    UART0->PP &= ~UART_PP_MSE;//0x0 = The UART module does not provide extended support for modem control.
+    UART0->PP &= ~UART_PP_MS;//0x0 = The UART module does not provide support for modem control.
+    UART0->PP &= ~UART_PP_SC;//0x0 = The UART module does not provide smart card support.
+
+    UART0->CTL &= ~UART_CTL_CTSEN;//0x0 = CTS hardware flow control is disabled.
+    UART0->CTL &= ~UART_CTL_RTSEN;//0x0 = RTS hardware flow control is disabled
+    UART0->CTL &= ~UART_CTL_SMART;//0x0 = Normal operation.
+
+    UART0->CTL |= UART_CTL_UARTEN; //0x1 = The UART is enabled.
+
+
+
 
 
     while(1)
