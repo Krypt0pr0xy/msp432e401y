@@ -16,8 +16,6 @@ void UARTSendArray(char array_to_send[])//send char array
 
     }
 
-    //UART0->CTL |= UART_CTL_EOT;
-
 }
 
 
@@ -39,41 +37,43 @@ int main(void)
     //******1. Enable the UART module page 331
     // UART Module 0 Run Mode Clock Gating Control
     SYSCTL->RCGCUART |= BIT0;//0x1 = Enable and provide a clock to UART module 0 in run mode
-    __delay_cycles(100);//NOP
+    __delay_cycles(10);//NOP
 
     //******2. Enable the clock to the appropriate GPIO module page 326
     //GPIO Port A Run Mode Clock Gating Control
     SYSCTL->RCGCGPIO |= BIT0;//0x1 = Enable and provide a clock to GPIO port A in run mode.
-    __delay_cycles(100);//NOP
-
-    GPIOA->CR |= BIT0;
-    GPIOA->CR |= BIT1;
+    __delay_cycles(10);//NOP
 
 
-    //******3.Set the GPIO AFSEL bits for the ap-propriate pins page 1213
-    //GPIO Alternate Function Select
+    //= The corresponding GPIOAFSEL, GPIOPUR, GPIOPDR, or GPIODEN bits can be written.
+    GPIOA->CR |= 0x03;
+    //GPIOA->CR |= BIT1;
+
+    //******3.Set the GPIO AFSEL bits for the appropriate pins page 1213
+    //GPIO Alternate Function Select page 1199
 
     GPIOA->AFSEL |= BIT0;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
     GPIOA->AFSEL |= BIT1;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
 
     GPIOA->PC |= BIT0;//0x1 = GPIO port A is powered but does not receive a clock. In this case, the module is inactive.
     //******4.Configure the GPIO current level or slew rate as specified for the mode selected
-    //GPIO Slew Rate Control Select
 
-    //Set as Output
-    GPIOA->DIR |= BIT0;
-    GPIOA->DIR |= BIT1;
+
     //set as Digital Pin
     GPIOA->DEN |= BIT0;
     GPIOA->DEN |= BIT1;
-    //TEST------------------
+
+    //Pullup Select
+    GPIOA->PUR |= BIT0;
+    GPIOA->PUR |= BIT1;
+
+    //GPIO Slew Rate Control Select
     GPIOA->SLR |= BIT0;//0x1 = Slew rate control is enabled for the corresponding pin.
     GPIOA->SLR |= BIT1;//0x1 = Slew rate control is enabled for the corresponding pin.
 
     //GPIO 8-mA Drive Select
     GPIOA->DR8R |= BIT0;//The corresponding GPIO pin has 8-mA drive
     GPIOA->DR8R |= BIT1;//The corresponding GPIO pin has 8-mA drive
-
 
     //*****5.Configure the PMCn fields in the GPIOPCTL register to assign the UART signals to the appropriate pins
     GPIOA->PCTL |= BIT0;//GPIO Pin Multiplexing page 30/157
@@ -91,19 +91,18 @@ int main(void)
     //*****6. Enable the UART by setting the UARTEN bit in the UARTCTL register.
 
 
-    UART0->CTL &= ~UART_CTL_LBE;//UART Loop Back Enable
+    UART0->CTL &= ~UART_CTL_LBE;//UART Loop Back Disable
     UART0->CTL &= ~UART_CTL_SIREN;//0x0 = Normal operation
 
     UART0->LCRH |= UART_LCRH_FEN;//UART  FIFOs
     UART0->LCRH |= 0x00110000;//UART Word Length 8Bits page 1640
 
 
-    UART0->CTL |= UART_CTL_TXE;//UART Transmit Enable
-    //UART0->CTL &= ~UART_CTL_TXE;//UART Transmit Disable
-
     UART0->CTL |= UART_CTL_RXE;//UART Receive Enable
     //UART0->CTL &= ~UART_CTL_RXE;//UART Receive Disable
 
+    UART0->CTL |= UART_CTL_TXE;//UART Transmit Enable
+    //UART0->CTL &= ~UART_CTL_TXE;//UART Transmit Disable
 
     UART0->PP &= ~UART_PP_MSE;//0x0 = The UART module does not provide extended support for modem control.
     UART0->PP &= ~UART_PP_MS;//0x0 = The UART module does not provide support for modem control.
@@ -122,7 +121,7 @@ unsigned int index = 0;
     while(1)
     {
         __delay_cycles(100000);//NOP
-        UARTSendArray("Hallo Welt");
+        UARTSendArray("Hi \n");
 
         __delay_cycles(100000);//NOP
         for(index = 0; index <= 24; index++)
@@ -134,10 +133,8 @@ unsigned int index = 0;
         {
             while(UART0->FR & UART_FR_RXFF);
             test[index] = UART0->DR;
+            if(test[index] == 0x00){index = 25;}
         }
-
-
-
     }
 
 }
