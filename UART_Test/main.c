@@ -51,7 +51,7 @@ int main(void)
 
     //******3.Set the GPIO AFSEL bits for the appropriate pins page 1213
     //GPIO Alternate Function Select page 1199
-
+    //GPIOPCTL is shown in Figure 17-26 and described in Table 17-33. page 1230 Port Mux
     GPIOA->AFSEL |= BIT0;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
     GPIOA->AFSEL |= BIT1;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
 
@@ -77,6 +77,7 @@ int main(void)
 
     //*****5.Configure the PMCn fields in the GPIOPCTL register to assign the UART signals to the appropriate pins
     GPIOA->PCTL |= BIT0;//GPIO Pin Multiplexing page 30/157
+    GPIOA->PCTL |= BIT4;//GPIO Pin Multiplexing page 30/157
     //UART configuration page 1630
     //*****1. Disable the UART by clearing the UARTEN bit in the UARTCTL register
     UART0->CTL &= ~UART_CTL_UARTEN;
@@ -121,7 +122,7 @@ unsigned int index = 0;
     while(1)
     {
         __delay_cycles(100000);//NOP
-        UARTSendArray("Hi \n");
+        //UARTSendArray("Hi");
 
         __delay_cycles(100000);//NOP
         for(index = 0; index <= 24; index++)
@@ -135,6 +136,7 @@ unsigned int index = 0;
             test[index] = UART0->DR;
             if(test[index] == 0x00){index = 25;}
         }
+        UARTSendArray(test);
     }
 
 }
