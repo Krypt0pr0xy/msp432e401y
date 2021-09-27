@@ -115,28 +115,47 @@ int main(void)
     UART0->CTL |= UART_CTL_UARTEN; //0x1 = The UART is enabled.
 
 
+    //Interrupt Setting
 
+    UART0->IM |= UART_IM_RXIM; //An interrupt is sent to the interrupt controller when the RXRIS bit in the UARTRIS register is set.
 
-char test[25] = 0;
+    _enable_interrupts();
+
+#define buffer_size 16
+char test[buffer_size] = 0;
 unsigned int index = 0;
+
+UARTSendArray("Startup Finished \r\n");
     while(1)
     {
-        __delay_cycles(100000);//NOP
-        //UARTSendArray("Hi");
 
         __delay_cycles(100000);//NOP
-        for(index = 0; index <= 24; index++)
+
+        while(UART0->FR & UART_FR_RXFF);
+
+        index = 0;
+        do
+        {
+            test[index] = UART0->DR;
+            index++;
+        }while(((index <= (buffer_size-1)) && (test[index-1] != 0x00)));
+
+        __delay_cycles(100000);//NOP
+        UARTSendArray("You Send:  ");
+        UARTSendArray(test);
+        UARTSendArray("\r\n");
+        for(index = 0; index <= buffer_size-1; index++)
         {
             test[index] = 0x00;
         }
 
-        for(index = 0; index <= 24; index++)
-        {
-            while(UART0->FR & UART_FR_RXFF);
-            test[index] = UART0->DR;
-            if(test[index] == 0x00){index = 25;}
-        }
-        UARTSendArray(test);
     }
 
 }
+
+
+__interrupt void EUSCIA0_IRQHandler(void)
+{
+    __delay_cycles(100000);//NOP
+}
+
