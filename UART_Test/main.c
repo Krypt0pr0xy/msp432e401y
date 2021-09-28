@@ -4,13 +4,24 @@
 #include "msp.h"
 
 
+#define buffer_size 16 // 16x8 FIFO
+#define END_Symbol 13//Enter Key
+
+char buffer_RX[buffer_size];
+unsigned int index_buffer_RX = 0;
+
+
+//Version V3
+
+//####################################################################################################################
+
 void UARTSendArray(char array_to_send[])//send char array
 {
     unsigned int array_length = strlen(array_to_send);//size of char
     unsigned int counter = 0;
     for(counter = 0; counter <= array_length; counter++)//for loop with length
     {
-        while(UART0->FR & UART_FR_TXFF);
+        while(UART0->FR & UART_FR_BUSY);
         __delay_cycles(1000);//NOP
         UART0->DR = array_to_send[counter];//Take array at specific place
 
@@ -82,9 +93,9 @@ int main(void)
     //*****1. Disable the UART by clearing the UARTEN bit in the UARTCTL register
     UART0->CTL &= ~UART_CTL_UARTEN;
     //*****2. Write the integer portion of the BRD to the UARTIBRD register.
-    UART0->IBRD = 8.680555;//BRD = 16000000 / (16 × 115200) = 8.680555
+    UART0->IBRD = 104.166;//BRD = 16000000 / (16 × 9600) = 104.166
     //*****3. Write the fractional portion of the BRD to the UARTFBRD register
-    UART0->FBRD = 54;//UARTFBRD[DIVFRAC] = integer(0.8507 × 64 + 0.5) = 54
+    UART0->FBRD = 11;//UARTFBRD[DIVFRAC] = integer(0.166 × 64 + 0.5) = 11
     //*****4. Write the desired serial parameters to the UARTLCRH register
     UART0->LCRH = 0x00000060;
     //*****5. Configure the UART clock source by writing to the UARTCC register
@@ -121,40 +132,41 @@ int main(void)
 
     _enable_interrupts();
 
-#define buffer_size 16
-char test[buffer_size] = 0;
-unsigned int index = 0;
 
-UARTSendArray("Startup Finished \r\n");
+    UARTSendArray("Startup Finished \r\n");
+
     while(1)
     {
 
         __delay_cycles(100000);//NOP
 
-        while(UART0->FR & UART_FR_RXFF);
-
-        index = 0;
-        do
+        if(!(UART0->FR & UART_FR_RXFE))//Check if data rx flag is set
         {
-            test[index] = UART0->DR;
-            index++;
-        }while(((index <= (buffer_size-1)) && (test[index-1] != 0x00)));
-
-        __delay_cycles(100000);//NOP
-        UARTSendArray("You Send:  ");
-        UARTSendArray(test);
-        UARTSendArray("\r\n");
-        for(index = 0; index <= buffer_size-1; index++)
-        {
-            test[index] = 0x00;
+            __delay_cycles(16000);//NOP 1ms
+            for(index_buffer_RX = 0; index_buffer_RX <= buffer_size-1; index_buffer_RX++)//Clear char array
+            {
+                buffer_RX[index_buffer_RX] = 0x00;//set default value for char array
+            }
+            index_buffer_RX = 0;//reset Index
+            do
+            {
+                buffer_RX[index_buffer_RX] = UART0->DR;//read first byte of data
+                __delay_cycles(16000);//NOP 1ms
+                index_buffer_RX++;//Increment index
+            }while(((index_buffer_RX <= (buffer_size-1)) && (buffer_RX[index_buffer_RX-1] != END_Symbol)));//check if loop index has not exceed and if the end symbol has found
+            UARTSendArray("You Send:  ");//send back "You Send"
+            UARTSendArray(buffer_RX);//send back data
+            UARTSendArray("\r\n");//send newline
         }
+
+
 
     }
 
 }
+//UART_RIS_TXRIS -> UARTICR TXIC 1
 
-
-__interrupt void EUSCIA0_IRQHandler(void)
+__interrupt void UART0_IRQHandler(void)
 {
     __delay_cycles(100000);//NOP
 }
