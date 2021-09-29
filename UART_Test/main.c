@@ -24,7 +24,6 @@ void UARTSendArray(char array_to_send[])//send char array
         while(UART0->FR & UART_FR_BUSY);
         __delay_cycles(1000);//NOP
         UART0->DR = array_to_send[counter];//Take array at specific place
-
     }
 
 }
@@ -127,18 +126,15 @@ int main(void)
 
 
     //Interrupt Setting
-
-    UART0->IM |= UART_IM_RXIM; //An interrupt is sent to the interrupt controller when the RXRIS bit in the UARTRIS register is set.
-
+    UART0->IM |= UART_IM_RXIM;//An interrupt is sent to the interrupt controller when the RXRIS bit in the UARTRIS register is set.
+    UART0->IFLS &= ~56//SET BIT3/4/5 to zero
     _enable_interrupts();
-
-
     UARTSendArray("Startup Finished \r\n");
 
     while(1)
     {
 
-        __delay_cycles(100000);//NOP
+        __delay_cycles(16000);//NOP 1ms
 
         if(!(UART0->FR & UART_FR_RXFE))//Check if data rx flag is set
         {
@@ -158,8 +154,6 @@ int main(void)
             UARTSendArray(buffer_RX);//send back data
             UARTSendArray("\r\n");//send newline
         }
-
-
 
     }
 
