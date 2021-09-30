@@ -12,7 +12,7 @@ unsigned int index_buffer_RX = 0;
 
 //Version V3
 
-void UART_INIT ()
+void UART_INIT()
 {
 //INIT UART
     //Universal Asynchronous Receiver/Transmitter (UART)
