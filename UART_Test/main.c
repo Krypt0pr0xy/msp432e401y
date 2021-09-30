@@ -1,4 +1,3 @@
-
 //UART TEST
 #include <stdint.h>
 #include "msp.h"
@@ -171,9 +170,3 @@ int main(void)
     }
 
 }
-
-
-
-
-
-
