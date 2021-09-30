@@ -13,28 +13,9 @@ unsigned int index_buffer_RX = 0;
 
 //Version V3
 
-//####################################################################################################################
-
-void UARTSendArray(char array_to_send[])//send char array
+void UART_INIT ()
 {
-    unsigned int array_length = strlen(array_to_send);//size of char
-    unsigned int counter = 0;
-    for(counter = 0; counter <= array_length; counter++)//for loop with length
-    {
-        while(UART0->FR & UART_FR_BUSY);
-        __delay_cycles(1000);//NOP
-        UART0->DR = array_to_send[counter];//Take array at specific place
-    }
-
-}
-
-
-
-int main(void)
-{
-
-
-    //INIT UART
+//INIT UART
     //Universal Asynchronous Receiver/Transmitter (UART)
     //Slau 723a page 1620
 
@@ -127,41 +108,72 @@ int main(void)
 
     //Interrupt Setting
     UART0->IM |= UART_IM_RXIM;//An interrupt is sent to the interrupt controller when the RXRIS bit in the UARTRIS register is set.
-    UART0->IFLS &= ~56//SET BIT3/4/5 to zero
+    UART0->IFLS &= ~56;//SET BIT3/4/5 to zero --> to Set FIFO interrupt trigger to 1/8 of the FIFO
+
+    //__NVIC_EnableIRQ(UART0_IRQn);
+    //__NVIC_SetVector(UART0_IRQn,1);
+    //UART_RIS_TXRIS -> UARTICR TXIC 1
+    __NVIC_EnableIRQ(UART0_IRQn);//Eanble UART0 Interrupt
     _enable_interrupts();
+}
+
+//####################################################################################################################
+
+void UARTSendArray(char array_to_send[])//send char array
+{
+    unsigned int array_length = strlen(array_to_send);//size of char
+    unsigned int counter = 0;
+    for(counter = 0; counter <= array_length; counter++)//for loop with length
+    {
+        while(UART0->FR & UART_FR_BUSY);
+        __delay_cycles(1000);//NOP
+        UART0->DR = array_to_send[counter];//Take array at specific place
+    }
+
+}
+
+//####################################################################################################################
+
+__interrupt void UART0_IRQHandler(void)
+{
+    if(!(UART0->FR & UART_FR_RXFE))//Check if data rx flag is set
+    {
+        __delay_cycles(16000);//NOP 1ms
+        for(index_buffer_RX = 0; index_buffer_RX <= buffer_size-1; index_buffer_RX++)//Clear char array
+        {
+            buffer_RX[index_buffer_RX] = 0x00;//set default value for char array
+        }
+        index_buffer_RX = 0;//reset Index
+        do
+        {
+            buffer_RX[index_buffer_RX] = UART0->DR;//read first byte of data
+            __delay_cycles(16000);//NOP 1ms
+            index_buffer_RX++;//Increment index
+        }while(((index_buffer_RX <= (buffer_size-1)) && (buffer_RX[index_buffer_RX-1] != END_Symbol)));//check if loop index has not exceed and if the end symbol has found
+        UARTSendArray("You Send:  ");//send back "You Send"
+        UARTSendArray(buffer_RX);//send back data
+        UARTSendArray("\r\n");//send newline
+    }
+}
+
+
+//####################################################################################################################
+int main(void)
+{
+    UART_INIT();
     UARTSendArray("Startup Finished \r\n");
 
     while(1)
     {
 
-        __delay_cycles(16000);//NOP 1ms
-
-        if(!(UART0->FR & UART_FR_RXFE))//Check if data rx flag is set
-        {
-            __delay_cycles(16000);//NOP 1ms
-            for(index_buffer_RX = 0; index_buffer_RX <= buffer_size-1; index_buffer_RX++)//Clear char array
-            {
-                buffer_RX[index_buffer_RX] = 0x00;//set default value for char array
-            }
-            index_buffer_RX = 0;//reset Index
-            do
-            {
-                buffer_RX[index_buffer_RX] = UART0->DR;//read first byte of data
-                __delay_cycles(16000);//NOP 1ms
-                index_buffer_RX++;//Increment index
-            }while(((index_buffer_RX <= (buffer_size-1)) && (buffer_RX[index_buffer_RX-1] != END_Symbol)));//check if loop index has not exceed and if the end symbol has found
-            UARTSendArray("You Send:  ");//send back "You Send"
-            UARTSendArray(buffer_RX);//send back data
-            UARTSendArray("\r\n");//send newline
-        }
+        __delay_cycles(16000000);//NOP 1s
 
     }
 
 }
-//UART_RIS_TXRIS -> UARTICR TXIC 1
 
-__interrupt void UART0_IRQHandler(void)
-{
-    __delay_cycles(100000);//NOP
-}
+
+
+
+
 
