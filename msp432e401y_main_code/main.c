@@ -1,6 +1,14 @@
 #include <stdint.h>
 #include "msp.h"
 
+#define SPI_CS_OFF (GPIOQ->DATA &= ~BIT1)
+#define SPI_CS_ON (GPIOQ->DATA |= BIT1)
+
+#define VREF 5.0
+#define MAXDACVALUE 1048575
+
+
+
 #define buffer_size 16 // 16x8 FIFO
 #define END_Symbol 13//Enter Key
 
@@ -174,13 +182,13 @@ void SPI_INIT()
         __delay_cycles(10);//NOP
         //3. Set the GPIO AFSEL bits for the appropriate pins (see Section 17.5.10). To determine which GPIOs to configure, see the device-specific data sheet.
         GPIOQ->AFSEL |= BIT0;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
-        GPIOQ->AFSEL |= BIT1;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
+        GPIOQ->AFSEL&= ~BIT1;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
         GPIOQ->AFSEL |= BIT2;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
         GPIOQ->AFSEL |= BIT3;//0x1 = The associated pin functions as a peripheral signal and is controlled by the alternate hardware function.
         //4. Configure the PMCn fields in the GPIOPCTL register to assign the QSSI signals to the appropriate pins. See Section 17.5.22 and the device-specific data sheet.
         //GPIO Pin Multiplexing page 30/157
         GPIOQ->PCTL |= 0xE;//SSI3Clk BIT14 Port0
-        GPIOQ->PCTL |= 0xE0;//SSI3Fss BIT14 Port1
+        //GPIOQ->PCTL |= 0xE0;//SSI3Fss BIT14 Port1
         GPIOQ->PCTL |= 0xE00;//SSI3XDAT0 BIT14 Port2
         GPIOQ->PCTL |= 0xE000;//SSI3XDAT1 BIT14 Port3
         //5. Program the GPIODEN register to enable the pin's digital function. In addition, the drive strength, drain select and pullup and pulldown functions must be configured. See Chapter 17 for more information.
@@ -236,29 +244,85 @@ void SPISendArray(char array_to_send)//send char array
     SSI3->DR = array_to_send;//Take array at specific place
 }
 
+void SPIsend4bytes(char dataset1, char dataset2, char dataset3, char dataset4)
+{
+    SPI_CS_OFF;
+    SPISendArray(dataset1);
+    //Bit23-16
+    SPISendArray(dataset2);
+    //Bit15-8
+    SPISendArray(dataset3);
+    //Bit7-0
+    SPISendArray(dataset4);
+    __delay_cycles(500);//NOP
+    SPI_CS_ON;
+}
+
+void DACsendVoltage(double setV)
+{
+    long DAC_value = 0.0;
+    DAC_value = setV / VREF;
+    DAC_value = DAC_value / MAXDACVALUE;
+    DAC_value = DAC_value << 4;
+
+    char DAC_value_1 = DAC_value;
+    char DAC_value_2 = DAC_value<<8;
+    char DAC_value_3 = DAC_value<<16;
+
+    SPIsend4bytes(0x01,DAC_value_1, DAC_value_2, DAC_value_3);
+
+    GPIOD->DATA &= ~BIT2;
+    __delay_cycles(500);//NOP
+    GPIOD->DATA |= BIT2;
+}
+
 //####################################################################################################################
 int main(void)
 {
     SPI_INIT();
     UART_INIT();
-
+    SYSCTL->RCGCGPIO |= BIT3;//0x1 = Enable and provide a clock to GPIO port D in run mode. Port D
+    GPIOD->DEN |= BIT2;
     //Config DAC
     //Config1 page 31/54
     //BIT32-24
-    SPISendArray(0b00000010);
-    //Bit23-16
-    SPISendArray(0b00000000);
-    //Bit15-8
-    SPISendArray(0b00001000);
-    //Bit7-0
-    SPISendArray(0b10000000);
+    GPIOQ->DIR |= BIT1;//set pin as output SPI_CS
+    GPIOD->DIR |= BIT2;//set pin as output SPI_LDAC
+    __delay_cycles(1000000);//NOP
+
+
+    GPIOQ->DATA |= BIT1;
+    SPI_CS_ON;
+
+
+    SPIsend4bytes(0b00000010, 0b00000000, 0b00000000, 0b10000000);//Config page 27/54
+//    GPIOQ->DATA &= ~BIT1;
+//    SPISendArray(0b00000010);
+//    //Bit23-16
+//    SPISendArray(0b00000000);
+//    //Bit15-8
+//    SPISendArray(0b00000000);
+//    //Bit7-0
+//    SPISendArray(0b10000000);
+//    __delay_cycles(500);//NOP
+//    GPIOQ->DATA |= BIT1;
+
     while(1)
     {
-        __delay_cycles(1000000);//NOP
-        SPISendArray(0x01);
-        SPISendArray(0xFF);
-        SPISendArray(0xFF);
-        SPISendArray(0xFF);
+//        GPIOQ->DATA &= ~BIT1;
+//        SPISendArray(0x01);
+//        SPISendArray(0x00);
+//        SPISendArray(0xFF);
+//        SPISendArray(0x00);
+//        __delay_cycles(500);//NOP
+//        GPIOQ->DATA |= BIT1;
+//        __delay_cycles(500);//NOP
+//
+//        GPIOD->DATA &= ~BIT2;
+//        __delay_cycles(500);//NOP
+//        GPIOD->DATA |= BIT2;
+        DACsendVoltage(2.5);
+        __delay_cycles(500);//NOP
 
     }
 }
