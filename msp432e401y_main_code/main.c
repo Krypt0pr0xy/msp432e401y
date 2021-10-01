@@ -242,12 +242,23 @@ int main(void)
     SPI_INIT();
     UART_INIT();
 
+    //Config DAC
+    //Config1 page 31/54
+    //BIT32-24
+    SPISendArray(0b00000010);
+    //Bit23-16
+    SPISendArray(0b00000000);
+    //Bit15-8
+    SPISendArray(0b00001000);
+    //Bit7-0
+    SPISendArray(0b10000000);
     while(1)
     {
         __delay_cycles(1000000);//NOP
         SPISendArray(0x01);
         SPISendArray(0xFF);
-        SPISendArray(0x00);
+        SPISendArray(0xFF);
+        SPISendArray(0xFF);
 
     }
 }
