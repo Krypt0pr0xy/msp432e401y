@@ -6,6 +6,7 @@
 
 char buffer_RX[buffer_size];
 unsigned int index_buffer_RX = 0;
+
 void UART_INIT()
 {
 //INIT UART
@@ -97,7 +98,6 @@ void UART_INIT()
     UART0->CTL &= ~UART_CTL_RTSEN;//0x0 = RTS hardware flow control is disabled
     UART0->CTL &= ~UART_CTL_SMART;//0x0 = Normal operation.
     UART0->CTL |= UART_CTL_UARTEN; //0x1 = The UART is enabled.
-
 
     //Interrupt Setting
     UART0->IM |= UART_IM_RXIM;//An interrupt is sent to the interrupt controller when the RXRIS bit in the UARTRIS register is set.
@@ -239,13 +239,15 @@ void SPISendArray(char array_to_send)//send char array
 //####################################################################################################################
 int main(void)
 {
+    SPI_INIT();
+    UART_INIT();
 
     while(1)
     {
-        __delay_cycles(10);//NOP
-        SPISendArray(0xA5);
-        __delay_cycles(10);//NOP
-        SPISendArray(0x5A);
+        __delay_cycles(1000000);//NOP
+        SPISendArray(0x01);
+        SPISendArray(0xFF);
+        SPISendArray(0x00);
 
     }
 }
