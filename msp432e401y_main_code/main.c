@@ -4,9 +4,9 @@
 #define SPI_CS_OFF (GPIOQ->DATA &= ~BIT1)
 #define SPI_CS_ON (GPIOQ->DATA |= BIT1)
 
+#define LDAC_OFF (GPIOD->DATA &= ~BIT2)
+#define LDAC_ON (GPIOD->DATA |= BIT2)
 #define VREF 5.0
-#define MAXDACVALUE 1048575
-
 
 
 #define buffer_size 16 // 16x8 FIFO
@@ -258,22 +258,23 @@ void SPIsend4bytes(char dataset1, char dataset2, char dataset3, char dataset4)
     SPI_CS_ON;
 }
 
-void DACsendVoltage(double setV)
+unsigned long DAC_value = 0;
+void DACsendVoltage(double set_voltage)
 {
-    long DAC_value = 0.0;
-    DAC_value = setV / VREF;
-    DAC_value = DAC_value / MAXDACVALUE;
+    //DAC_value = 786432;
+    //DAC_value = ((set_voltage + VREF)/VREF) * 524288;
+    //DAC_value = ((set_voltage)/VREF) * 1048575;
     DAC_value = DAC_value << 4;
 
-    char DAC_value_1 = DAC_value;
-    char DAC_value_2 = DAC_value<<8;
-    char DAC_value_3 = DAC_value<<16;
+    char DAC_value_1 = DAC_value>>16;
+    char DAC_value_2 = DAC_value>>8;
+    char DAC_value_3 = DAC_value;
 
     SPIsend4bytes(0x01,DAC_value_1, DAC_value_2, DAC_value_3);
 
-    GPIOD->DATA &= ~BIT2;
+    LDAC_OFF;
     __delay_cycles(500);//NOP
-    GPIOD->DATA |= BIT2;
+    LDAC_ON;
 }
 
 //####################################################################################################################
@@ -291,7 +292,6 @@ int main(void)
     __delay_cycles(1000000);//NOP
 
 
-    GPIOQ->DATA |= BIT1;
     SPI_CS_ON;
 
 
@@ -313,7 +313,7 @@ int main(void)
 //        SPISendArray(0x01);
 //        SPISendArray(0x00);
 //        SPISendArray(0xFF);
-//        SPISendArray(0x00);
+//        SPISendArray(0xFF & ~15);
 //        __delay_cycles(500);//NOP
 //        GPIOQ->DATA |= BIT1;
 //        __delay_cycles(500);//NOP
@@ -321,7 +321,15 @@ int main(void)
 //        GPIOD->DATA &= ~BIT2;
 //        __delay_cycles(500);//NOP
 //        GPIOD->DATA |= BIT2;
-        DACsendVoltage(2.5);
+        unsigned long test = 0;
+        for(test = 524280; test <= 524300; test++)
+        {
+            DAC_value = test;
+            DACsendVoltage(0);
+            __delay_cycles(50000);//NOP
+
+        }
+
         __delay_cycles(500);//NOP
 
     }
