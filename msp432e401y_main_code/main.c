@@ -1,6 +1,7 @@
 #include <stdint.h>
+#include <stdio.h>
 #include "msp.h"
-
+//#define DEBUGG
 #define SPI_CS_OFF (GPIOQ->DATA &= ~BIT1)
 #define SPI_CS_ON (GPIOQ->DATA |= BIT1)
 
@@ -9,11 +10,19 @@
 #define VREF 5.0
 
 
-#define buffer_size 16 // 16x8 FIFO
+#define buffer_size 20
 #define END_Symbol 13//Enter Key
 
 char buffer_RX[buffer_size];
 unsigned int index_buffer_RX = 0;
+
+#define buflen_cmd 20//!!DO not change them unless you discussed it with the creator of this document!!
+#define COMMANDCHAR '_'//Separator
+char cmd_1[buflen_cmd] = "";//command 1 buffer
+char cmd_2[buflen_cmd] = "";//command 2 buffer
+char cmd_3[buflen_cmd] = "";//command 3 buffer
+char cmd_4[buflen_cmd] = "";//command 4 buffer
+char cmd_5[buflen_cmd] = "";//command 5 buffer
 
 void UART_INIT()
 {
@@ -154,6 +163,7 @@ __interrupt void UART0_IRQHandler(void)
         UARTSendArray("You Send:  ");//send back "You Send"
         UARTSendArray(buffer_RX);//send back data
         UARTSendArray("\r\n");//send newline
+        CommandDecoder(buffer_RX);
     }
 }
 
@@ -257,27 +267,139 @@ void SPIsend4bytes(char dataset1, char dataset2, char dataset3, char dataset4)
     __delay_cycles(500);//NOP
     SPI_CS_ON;
 }
-
-unsigned long DAC_value = 0;
+//####################################################################################################################
+unsigned long DAC_value = 0;//Only for tests
 void DACsendVoltage(double set_voltage)
 {
     //DAC_value = 786432;
     //DAC_value = ((set_voltage + VREF)/VREF) * 524288;
     //DAC_value = ((set_voltage)/VREF) * 1048575;
+    __delay_cycles(500);//NOP
     DAC_value = DAC_value << 4;
 
-    char DAC_value_1 = DAC_value>>16;
-    char DAC_value_2 = DAC_value>>8;
-    char DAC_value_3 = DAC_value;
+    uint8_t DAC_value_1 = DAC_value>>16;
+    uint8_t DAC_value_2 = DAC_value>>8;
+    uint8_t DAC_value_3 = DAC_value;
 
     SPIsend4bytes(0x01,DAC_value_1, DAC_value_2, DAC_value_3);
-
     LDAC_OFF;
     __delay_cycles(500);//NOP
     LDAC_ON;
 }
 
-//####################################################################################################################
+double get_Voltage(char value[buflen_cmd])
+{
+    //_____________________________________________________________________________
+        //Extracting the Voltage
+        char input[buflen_cmd] = "";//input buffer
+        strcpy(input, value);//copy it from value
+        input[19] = '\0';//securing the last buffer as end symbol
+        int firstdigit = 0;
+        unsigned long long commavalue = 0;
+        unsigned long long Divider = 1E18;
+        firstdigit = atoi(strtok(value, ','));//take the first digit only
+        if(firstdigit < 0){firstdigit *= (-1);}//be sure it is positiv
+        char offset = 0;
+        if(input[0] == '-')//check if first buffer has an minus symbol
+        {
+            offset = 1;
+            input[2] = 0;//clearing buffer
+        }
+        input[0] = 0;//clearing buffer
+        input[1] = 0;//clearing buffer
+
+        char counter = 0;
+        for(counter = (2+offset); counter <=19; counter++)//counting through the array
+        {
+            char temp_buf[2] = {input[counter], '\0' };//filling an temporary buffer ech time
+            commavalue+=(atoi(temp_buf)*Divider);//
+
+            Divider /= 10;//setting divider one place down
+        }
+
+        double vout = 0.0;
+
+        vout+=firstdigit;//adding the first digit to Vout
+        vout+=(commavalue/1E19);//adding the comma value to Vout
+
+        if(offset > 0){vout *= (-1);}//multiplying with -1 when the value should be negativ
+        return vout;
+    //_____________________________________________________________________________________________
+}
+
+//#########################################################################################################################################################
+//____________________________________________Command Decoder SET_CH1_2.5_OUT10_Low
+void CommandDecoder(char input_command[])
+{
+    unsigned char clearCounter=0;
+    //Clearing all Char arrays
+    for(clearCounter = 0; clearCounter <=19;clearCounter++)
+    {
+        cmd_1[clearCounter] = '\0';
+        cmd_2[clearCounter] = '\0';
+        cmd_3[clearCounter] = '\0';
+        cmd_4[clearCounter] = '\0';
+        cmd_5[clearCounter] = '\0';
+    }
+    unsigned char length = strlen(input_command);
+    unsigned char counter = 0;
+    unsigned char cmd_counter = 0;
+
+    //SET=CH1=4.5=OUT10
+
+    cmd_counter=0;//Reseting counter for out but array
+    for(counter = 0; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
+    {
+        cmd_1[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_counter++;
+    }
+
+    cmd_counter=0;//Reseting counter for out but array
+    for(counter = counter+1; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
+    {
+        cmd_2[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_counter++;
+    }
+
+    cmd_counter=0;//Reseting counter for out but array
+    for(counter = counter+1; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
+    {
+        cmd_3[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_counter++;
+    }
+
+    cmd_counter=0;//Reseting counter for out but array
+    for(counter = counter+1; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
+    {
+        cmd_4[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_counter++;
+    }
+
+    cmd_counter=0;//Reseting counter for out but array
+    for(counter = counter+1; (input_command[counter] != '\r') && (counter <= length); counter++)//Searching to Special Symbol
+    {
+        cmd_5[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_counter++;
+    }
+
+    //ending the char array with a end Symbol
+    cmd_1[strlen(cmd_1)+1] = '\0';
+    cmd_2[strlen(cmd_2)+1] = '\0';
+    cmd_3[strlen(cmd_3)+1] = '\0';
+    cmd_4[strlen(cmd_4)+1] = '\0';
+    cmd_5[strlen(cmd_5)+1] = '\0';
+    //Sending the Information over UART back
+    //Check the SET Command and when true start command_set function
+    if(strcmp(cmd_1, "SET\0") == 0)
+    {
+        DACsendVoltage(get_Voltage(cmd_3));
+        UARTSendArray("Set Voltage to ");
+        UARTSendArray(cmd_3);
+        UARTSendArray("\r\n");
+    }
+}
+
+
 int main(void)
 {
     SPI_INIT();
@@ -291,21 +413,10 @@ int main(void)
     GPIOD->DIR |= BIT2;//set pin as output SPI_LDAC
     __delay_cycles(1000000);//NOP
 
+    SPI_CS_ON;//set CS Pin High
 
-    SPI_CS_ON;
 
-
-    SPIsend4bytes(0b00000010, 0b00000000, 0b00000000, 0b10000000);//Config page 27/54
-//    GPIOQ->DATA &= ~BIT1;
-//    SPISendArray(0b00000010);
-//    //Bit23-16
-//    SPISendArray(0b00000000);
-//    //Bit15-8
-//    SPISendArray(0b00000000);
-//    //Bit7-0
-//    SPISendArray(0b10000000);
-//    __delay_cycles(500);//NOP
-//    GPIOQ->DATA |= BIT1;
+    SPIsend4bytes(0b00000010, 0b00000000, 0b00000001, 0b00000000);//Config page 27/54
 
     while(1)
     {
@@ -321,16 +432,17 @@ int main(void)
 //        GPIOD->DATA &= ~BIT2;
 //        __delay_cycles(500);//NOP
 //        GPIOD->DATA |= BIT2;
-        unsigned long test = 0;
-        for(test = 524280; test <= 524300; test++)
-        {
-            DAC_value = test;
-            DACsendVoltage(0);
-            __delay_cycles(50000);//NOP
 
-        }
+//        unsigned long test = 0;
+//        for(test = 524285; test <= 524300; test++)
+//        {
+//            DAC_value = test;
+//            DACsendVoltage(0);
+//            __delay_cycles(50000);//NOP
+//        }
 
-        __delay_cycles(500);//NOP
+         __delay_cycles(500);//NOP
 
     }
 }
+//
