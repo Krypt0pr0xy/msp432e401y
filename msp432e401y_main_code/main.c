@@ -168,7 +168,6 @@ __interrupt void UART0_IRQHandler(void)
 }
 
 //####################################################################################################################
-
 void SPI_INIT()
 {
     //Quad Synchronous Serial Interface (QSSI)
@@ -203,10 +202,10 @@ void SPI_INIT()
         GPIOQ->PCTL |= 0xE000;//SSI3XDAT1 BIT14 Port3
         //5. Program the GPIODEN register to enable the pin's digital function. In addition, the drive strength, drain select and pullup and pulldown functions must be configured. See Chapter 17 for more information.
         //set as Digital Pin
-        GPIOQ->DEN |= BIT0;
-        GPIOQ->DEN |= BIT1;
-        GPIOQ->DEN |= BIT2;
-        //Pullup Select
+        GPIOQ->DEN |= BIT0;//Port PQ0
+        GPIOQ->DEN |= BIT1;//Port PQ1
+        GPIOQ->DEN |= BIT2;//Port PQ2
+        //Pullup Select: is not needed in this situation
     //    GPIOA->PUR |= BIT0;
     //    GPIOA->PUR |= BIT1;
     //    GPIOA->PUR |= BIT2;
@@ -274,15 +273,14 @@ void DACsendVoltage(double set_voltage)
     //DAC_value = 786432;
     //DAC_value = ((set_voltage + VREF)/VREF) * 524288;
     //DAC_value = ((set_voltage)/VREF) * 1048575;
-    __delay_cycles(500);//NOP
-    DAC_value = DAC_value << 4;
+    DAC_value = DAC_value << 4;//Shift operation to the left with 4 Bits
 
-    uint8_t DAC_value_1 = DAC_value>>16;
-    uint8_t DAC_value_2 = DAC_value>>8;
+    uint8_t DAC_value_1 = DAC_value>>16;//Shift operation to the right with 16 Bits
+    uint8_t DAC_value_2 = DAC_value>>8;//Shift operation to the right with 8 Bits
     uint8_t DAC_value_3 = DAC_value;
 
     SPIsend4bytes(0x01,DAC_value_1, DAC_value_2, DAC_value_3);
-    LDAC_OFF;
+    LDAC_OFF;// Set the load DAC for a short moment low
     __delay_cycles(500);//NOP
     LDAC_ON;
 }
@@ -433,16 +431,15 @@ int main(void)
 //        __delay_cycles(500);//NOP
 //        GPIOD->DATA |= BIT2;
 
-//        unsigned long test = 0;
-//        for(test = 524285; test <= 524300; test++)
-//        {
-//            DAC_value = test;
-//            DACsendVoltage(0);
-//            __delay_cycles(50000);//NOP
-//        }
+        unsigned long test = 0;
+        for(test = 524285; test <= 524300; test++)
+        {
+            DAC_value = test;
+            DACsendVoltage(0);
+            __delay_cycles(50000);//NOP
+        }
 
          __delay_cycles(500);//NOP
 
     }
 }
-//
