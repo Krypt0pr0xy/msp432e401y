@@ -105,35 +105,35 @@ void CommandDecoder(char input_command[])
     cmd_counter=0;//Reseting counter for out but array
     for(counter = 0; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
     {
-        cmd_1[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_1[cmd_counter] = input_command[counter];//Copy char to command char
         cmd_counter++;
     }
 
     cmd_counter=0;//Reseting counter for out but array
     for(counter = counter+1; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
     {
-        cmd_2[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_2[cmd_counter] = input_command[counter];//Copy char to command char
         cmd_counter++;
     }
 
     cmd_counter=0;//Reseting counter for out but array
     for(counter = counter+1; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
     {
-        cmd_3[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_3[cmd_counter] = input_command[counter];//Copy char to command char
         cmd_counter++;
     }
 
     cmd_counter=0;//Reseting counter for out but array
     for(counter = counter+1; (input_command[counter] != COMMANDCHAR) && (counter <= length); counter++)//Searching to Special Symbol
     {
-        cmd_4[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_4[cmd_counter] = input_command[counter];//Copy char to command char
         cmd_counter++;
     }
 
     cmd_counter=0;//Reseting counter for out but array
     for(counter = counter+1; (input_command[counter] != '\r') && (counter <= length); counter++)//Searching to Special Symbol
     {
-        cmd_5[cmd_counter] = input_command[counter];//Copy char to comand char
+        cmd_5[cmd_counter] = input_command[counter];//Copy char to command char
         cmd_counter++;
     }
 
@@ -188,13 +188,13 @@ int main(void)
 //        __delay_cycles(500);//NOP
 //        GPIOD->DATA |= BIT2;
 
-//        unsigned long test = 0;
-//        for(test = 524285; test <= 524300; test++)
-//        {
-//            DAC_value = test;
-//            DACsendVoltage(0);
-//            __delay_cycles(50000);//NOP
-//        }
+        unsigned long test = 0;
+        for(test = 524285; test <= 524300; test++)
+        {
+            DAC_value = test;
+            DACsendVoltage(0);
+            __delay_cycles(50000);//NOP
+        }
 
          __delay_cycles(500);//NOP
 
