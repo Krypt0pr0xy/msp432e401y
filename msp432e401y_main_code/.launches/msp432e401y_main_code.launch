@@ -4,7 +4,7 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="${build_artifact:msp432e401y_main_code}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="msp432e401y_main_code"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:msp432e401y_main_code}"/>
-<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="H:\git\msp432e401y\msp432e401y_main_code\Debug\msp432e401y_main_code.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP432E401Y.ccxml.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="P:\elektronik\_CYWY\Projekte\msp432e401y\code\msp432e401y\msp432e401y_main_code\Debug\msp432e401y_main_code.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/msp432e401y_main_code"/>
 </listAttribute>
