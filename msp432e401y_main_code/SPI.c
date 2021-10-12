@@ -71,7 +71,7 @@ void SPI_INIT()
 //        SSI3->CR0 |= BIT1;
 //        SSI3->CR0 |= BIT2;
         //0xF = 8-bit data
-        SSI3->CR0 |= 0xF;
+        SSI3->CR0 |= 0xF;//16Bit Data Mode
 
 
         //Eanble SSE
