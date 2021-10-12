@@ -66,9 +66,13 @@ void SPI_INIT()
         SSI3->CR0 &= ~BIT4;//FRF Freescale SPI Frame Format
         SSI3->CR0 &= ~BIT5;
         //DDS QSSI Data Size Select
-        SSI3->CR0 |= BIT0;
-        SSI3->CR0 |= BIT1;
-        SSI3->CR0 |= BIT2;//0x7 = 8-bit data
+//        //0x7 = 8-bit data
+//        SSI3->CR0 |= BIT0;
+//        SSI3->CR0 |= BIT1;
+//        SSI3->CR0 |= BIT2;
+        //0xF = 8-bit data
+        SSI3->CR0 |= 0xF;
+
 
         //Eanble SSE
 
@@ -82,17 +86,36 @@ void SPISendArray(char array_to_send)//send char array
     SSI3->DR = array_to_send;//Take array at specific place
 }
 
+//####################################################################################################################
+void SPISendTwoArray(char byte1, char byte0)//send char array
+{
+    int TwoByte = 0;
+    TwoByte = byte1;
+    TwoByte = TwoByte << 8;
+    TwoByte += byte0;
+    while(SSI3->SR & SSI_SR_BSY);
+    //__delay_cycles(1000);//NOP
+    SSI3->DR = TwoByte;//Take array at specific place
+}
+
+
 void SPIsend4bytes(char dataset1, char dataset2, char dataset3, char dataset4)
 {
+//    SPI_CS_OFF;
+//    SPISendArray(dataset1);
+//    //Bit23-16
+//    SPISendArray(dataset2);
+//    //Bit15-8
+//    SPISendArray(dataset3);
+//    //Bit7-0
+//    SPISendArray(dataset4);
+//    __delay_cycles(400);//NOP //delay for CS in the SPI communication value measuerd with locig analyser
+//    SPI_CS_ON;
+
     SPI_CS_OFF;
-    SPISendArray(dataset1);
-    //Bit23-16
-    SPISendArray(dataset2);
-    //Bit15-8
-    SPISendArray(dataset3);
-    //Bit7-0
-    SPISendArray(dataset4);
-    __delay_cycles(400);//NOP //delay for CS in the SPI communication value measuerd with locig analyser
+    SPISendTwoArray(dataset1,dataset2);
+    SPISendTwoArray(dataset3,dataset4);
+    __delay_cycles(600);//NOP //delay for CS in the SPI communication value measuerd with locig analyser
     SPI_CS_ON;
 }
 //####################################################################################################################

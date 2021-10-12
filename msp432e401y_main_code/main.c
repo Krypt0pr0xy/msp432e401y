@@ -29,7 +29,7 @@ char cmd_5[buflen_cmd] = "";//command 5 buffer
 unsigned long DAC_value = 0;//Only for tests
 void DACsendVoltage(double set_voltage)
 {
-    DAC_value = ((set_voltage + VREF)/VREF) * 524288;//Calc DAC value from Voltage value --> in a range from -Vref to +Vref
+    DAC_value = ((set_voltage + VREF)/(2*VREF)) * 1048575;//Calc DAC value from Voltage value --> in a range from -Vref to +Vref
     DAC_value = DAC_value << 4;//Shift operation to the left with 4 Bits
 
     uint8_t DAC_value_1 = DAC_value>>16;//Shift operation to the right with 16 Bits
@@ -171,8 +171,8 @@ int main(void)
 
     SPI_CS_ON;//set CS Pin High
 
-
-    SPIsend4bytes(0b00000010, 0b00000000, 0b00000001, 0b00000000);//Config page 27/54
+    SPIsend4bytes(0x04, 0x00, 0x00, 0x40);//Config page 27/54
+    SPIsend4bytes(0b00000010, 0b00000000, 0b01000001, 0b00000000);//Config page 27/54
 
     while(1)
     {
@@ -183,11 +183,14 @@ int main(void)
 //            DACsendVoltage(0);
 //            __delay_cycles(50000);//NOP
 //        }
+
          double test = 0;
-         for(test = -5; test <= 5; test+=0.5)
+         for(test = -4; test <= 4; test+=0.5)
          {
              DACsendVoltage(test);
              __delay_cycles(50000);//NOP
+
+
          }
          __delay_cycles(500);//NOP
 
