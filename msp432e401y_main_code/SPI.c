@@ -78,7 +78,7 @@ void SPI_INIT()
 void SPISendArray(char array_to_send)//send char array
 {
     while(SSI3->SR & SSI_SR_BSY);
-    __delay_cycles(1000);//NOP
+    //__delay_cycles(1000);//NOP
     SSI3->DR = array_to_send;//Take array at specific place
 }
 
@@ -92,7 +92,7 @@ void SPIsend4bytes(char dataset1, char dataset2, char dataset3, char dataset4)
     SPISendArray(dataset3);
     //Bit7-0
     SPISendArray(dataset4);
-    __delay_cycles(500);//NOP //delay for CS in the SPI communication value measuerd with locig analyser
+    __delay_cycles(400);//NOP //delay for CS in the SPI communication value measuerd with locig analyser
     SPI_CS_ON;
 }
 //####################################################################################################################

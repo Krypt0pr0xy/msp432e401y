@@ -29,7 +29,7 @@ char cmd_5[buflen_cmd] = "";//command 5 buffer
 unsigned long DAC_value = 0;//Only for tests
 void DACsendVoltage(double set_voltage)
 {
-    //DAC_value = ((set_voltage + VREF)/VREF) * 524288;//Calc DAC value from Voltage value --> in a range from -Vref to +Vref
+    DAC_value = ((set_voltage + VREF)/VREF) * 524288;//Calc DAC value from Voltage value --> in a range from -Vref to +Vref
     DAC_value = DAC_value << 4;//Shift operation to the left with 4 Bits
 
     uint8_t DAC_value_1 = DAC_value>>16;//Shift operation to the right with 16 Bits
@@ -37,6 +37,7 @@ void DACsendVoltage(double set_voltage)
     uint8_t DAC_value_3 = DAC_value;
 
     SPIsend4bytes(0x01,DAC_value_1, DAC_value_2, DAC_value_3);
+    __delay_cycles(100);//NOP
     LDAC_OFF;// Set the load DAC for a short moment low
     __delay_cycles(500);//NOP
     LDAC_ON;
@@ -175,27 +176,19 @@ int main(void)
 
     while(1)
     {
-//        GPIOQ->DATA &= ~BIT1;
-//        SPISendArray(0x01);
-//        SPISendArray(0x00);
-//        SPISendArray(0xFF);
-//        SPISendArray(0xFF & ~15);
-//        __delay_cycles(500);//NOP
-//        GPIOQ->DATA |= BIT1;
-//        __delay_cycles(500);//NOP
-//
-//        GPIOD->DATA &= ~BIT2;
-//        __delay_cycles(500);//NOP
-//        GPIOD->DATA |= BIT2;
-
-        unsigned long test = 0;
-        for(test = 524285; test <= 524300; test++)
-        {
-            DAC_value = test;
-            DACsendVoltage(0);
-            __delay_cycles(50000);//NOP
-        }
-
+//        unsigned long test = 0;
+//        for(test = 0x0007FFFE; test <= 0x00080002; test++)
+//        {
+//            DAC_value = test;
+//            DACsendVoltage(0);
+//            __delay_cycles(50000);//NOP
+//        }
+         double test = 0;
+         for(test = -5; test <= 5; test+=0.5)
+         {
+             DACsendVoltage(test);
+             __delay_cycles(50000);//NOP
+         }
          __delay_cycles(500);//NOP
 
     }
